@@ -1,6 +1,6 @@
-# ⚡ AI-Generated Circuit Visualization (MATLAB + OpenAI)
+# ⚡ SimuGrid (MATLAB + OpenAI)
 
-This MATLAB App automatically generates **schematic visualizations** of connected appliances using **OpenAI’s image generation API**.
+SimuGrid automatically generates **schematic visualizations** of connected appliances using **OpenAI’s image generation API**.
 It combines real-time **energy consumption simulation** with **AI-powered infographic rendering** — turning your data into elegant, educational visuals.
 
 ---
