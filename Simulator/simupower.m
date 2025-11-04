@@ -251,129 +251,126 @@ classdef simupower < matlab.apps.AppBase
         end
 %% VI. ---------------------- SIMULATION ---------------------- [ASSISTED BY MATGPT]
         function updateSimulation(app)
-        % CLEARS PREVIOUS VISULAS
-        try
-        delete([app.LastBreakdownLabels; app.LastImageHandles; app.LastWireHandles]);
-        catch
-        end
-        app.LastBreakdownLabels = gobjects(0);
-        app.LastImageHandles = gobjects(0);
-        app.LastWireHandles = gobjects(0);
-        
-        % VALIDATES SELECTION
-        selected = app.ApplianceListListBox.Value;
-        n = str2double(app.NumberofApplicationsDropDown.Value);
-        selected = selected(1:min(n, numel(selected)));
-        if isempty(selected)
-            uialert(app.UIFigure,'Please select at least one appliance.','Error');
-            return;
-        end
-        
-        % DETERMINES TIME FRAME
-        switch app.TimeFrameDropDown.Value
-            case 'Daily', days = 1;
-            case 'Weekly', days = 7;
-            case 'Monthly', days = 30;
-            otherwise, days = 30;
-        end
-        
-        % COMPUTES COST
-        totalCost = 0;
-        for i = 1:numel(selected)
-            name = selected{i};
-            hours = app.ConsumptionFieldArray(i).Value;
-            watt = app.ApplianceData.(name);
-            totalCost = totalCost + (watt * hours / 1000 * days * app.ElecRate);
-        end
-        
-        % BUILD AI IMAGE PROMPT *
-        applianceStr = strjoin(selected, ', ');
-        desc = sprintf(['Generate a clean schematic illustration showing %s connected ', ...
-            'to a central power outlet using soft glowing lines. Minimal pastel colors, ', ...
-            'flat design, white background, no text. Educational infographic look.'], ...
-            applianceStr);
-        
-        % API CALL *
-        try
-            import matlab.net.http.*
-        
-            apiKey = 'sk-proj-xxxx';  % API HERE
-            url = 'https://api.openai.com/v1/images/generations';
-        
-            headers = [ ...
-                HeaderField('Content-Type','application/json'), ...
-                HeaderField('Authorization',['Bearer ' apiKey]) ...
-            ];
-        
-            % PASS STRUCT *
-            body = struct( ...
-                'model', 'gpt-image-1', ...
-                'prompt', desc, ...
-                'size', '1024x1024' ...
-            );
-        
-            req = RequestMessage('post', headers, MessageBody(body));
-            resp = req.send(url);
-        
-            % HANDLE ERRORS *
-            if resp.StatusCode ~= 200
-                raw = resp.Body.Data;
-        
-                % EXTRACT RAW ERROR MESSAGE (FOR DEBUGGING) *
-                if isstruct(raw) && isfield(raw,'error')
-                    errMsg = raw.error.message;
-                else
-                    errMsg = jsonencode(raw);
-                end
-        
-                % HANDLE SPECIFIC ERROR (BILL LIMIT) *
-                if contains(lower(errMsg),'quota') || contains(lower(errMsg),'billing')
-                    uialert(app.UIFigure, ...
-                        ['Your OpenAI billing limit or quota has been reached. ' ...
-                         'Please check your plan and billing details on the OpenAI dashboard.'], ...
-                        'Billing Limit Reached');
-                else
-                    uialert(app.UIFigure, sprintf('Failed to generate visual simulation.\n\n%s', errMsg), 'AI Error');
-                end
-        
-                warning('HTTP %d: %s', double(resp.StatusCode), errMsg);
+            % CLEARS PREVIOUS VISUALS
+            try
+                delete([app.LastBreakdownLabels; app.LastImageHandles; app.LastWireHandles]);
+            catch
+            end
+            app.LastBreakdownLabels = gobjects(0);
+            app.LastImageHandles = gobjects(0);
+            app.LastWireHandles = gobjects(0);
+            
+            % VALIDATES SELECTION
+            selected = app.ApplianceListListBox.Value;
+            n = str2double(app.NumberofApplicationsDropDown.Value);
+            selected = selected(1:min(n, numel(selected)));
+            if isempty(selected)
+                uialert(app.UIFigure,'Please select at least one appliance.','Error');
                 return;
             end
-        
-            % PARSE AND DISPLAY IMAGE *
-            data = resp.Body.Data;
-            if ~isstruct(data)
-                data = jsondecode(char(string(data)));
+            
+            % DETERMINES TIME FRAME
+            switch app.TimeFrameDropDown.Value
+                case 'Daily', days = 1;
+                case 'Weekly', days = 7;
+                case 'Monthly', days = 30;
+                otherwise, days = 30;
+            end
+            
+            % COMPUTES COST
+            totalCost = 0;
+            for i = 1:numel(selected)
+                name = selected{i};
+                hours = app.ConsumptionFieldArray(i).Value;
+                watt = app.ApplianceData.(name);
+                totalCost = totalCost + (watt * hours / 1000 * days * app.ElecRate);
             end
         
-            image_url = data.data(1).url;
-            img = imread(image_url);
+            % ALWAYS UPDATE COST LABEL FIRST (so it runs even if AI fails)
+            app.EstimatedBillPhp000Label.Text = sprintf('Estimated Bill (%s): Php %.2f', ...
+                app.TimeFrameDropDown.Value, totalCost);
         
-            delete(findall(app.SimulationPanel,'Type','uiimage'));
-            uiimage(app.SimulationPanel, ...
-                'ImageSource', img, ...
-                'Position',[40 40 480 420], ...
-                'ScaleMethod','fit');
-        
-        catch ME
-            msg = ME.message;
-            warning('%s', msg);
-            if contains(lower(msg),'billing') || contains(lower(msg),'quota')
-                uialert(app.UIFigure, ...
-                    ['Your OpenAI billing limit or quota has been reached. ' ...
-                     'Please check your plan and billing details on the OpenAI dashboard.'], ...
-                    'Billing Limit Reached');
-            else
-                uialert(app.UIFigure, sprintf('Failed to generate visual simulation.\n\n%s', msg), 'AI Error');
+            % BUILD AI IMAGE PROMPT *
+            applianceStr = strjoin(selected, ', ');
+            desc = sprintf(['Generate a clean schematic illustration showing %s connected ', ...
+                'to a central power outlet using soft glowing lines. Minimal pastel colors, ', ...
+                'flat design, white background, no text. Educational infographic look.'], ...
+                applianceStr);
+            
+            % --- AI IMAGE GENERATION (SAFE TO FAIL) ---
+            try
+                import matlab.net.http.*
+            
+                apiKey = 'sk-proj-XXXX';  % Replace with your key
+                url = 'https://api.openai.com/v1/images/generations';
+            
+                headers = [ ...
+                    HeaderField('Content-Type','application/json'), ...
+                    HeaderField('Authorization',['Bearer ' apiKey]) ...
+                ];
+            
+                body = struct( ...
+                    'model', 'gpt-image-1', ...
+                    'prompt', desc, ...
+                    'size', '1024x1024' ...
+                );
+            
+                req = RequestMessage('post', headers, MessageBody(body));
+                resp = req.send(url);
+            
+                % HANDLE ERRORS *
+                if resp.StatusCode ~= 200
+                    raw = resp.Body.Data;
+            
+                    % EXTRACT RAW ERROR MESSAGE (FOR DEBUGGING) *
+                    if isstruct(raw) && isfield(raw,'error')
+                        errMsg = raw.error.message;
+                    else
+                        errMsg = jsonencode(raw);
+                    end
+            
+                    % HANDLE SPECIFIC ERROR (BILL LIMIT) *
+                    if contains(lower(errMsg),'quota') || contains(lower(errMsg),'billing')
+                        uialert(app.UIFigure, ...
+                            ['Your OpenAI billing limit or quota has been reached. ' ...
+                             'Please check your plan and billing details on the OpenAI dashboard.'], ...
+                            'Billing Limit Reached');
+                    else
+                        uialert(app.UIFigure, sprintf('AI visual generation failed.\n\n%s\n\nSimulation calculations are still complete.', errMsg), 'AI Error');
+                    end
+            
+                    warning('HTTP %d: %s', double(resp.StatusCode), errMsg);
+                    return; % optional – skips only image part, cost already updated
+                end
+            
+                % PARSE AND DISPLAY IMAGE *
+                data = resp.Body.Data;
+                if ~isstruct(data)
+                    data = jsondecode(char(string(data)));
+                end
+            
+                image_url = data.data(1).url;
+                img = imread(image_url);
+            
+                delete(findall(app.SimulationPanel,'Type','uiimage'));
+                uiimage(app.SimulationPanel, ...
+                    'ImageSource', img, ...
+                    'Position',[40 40 480 420], ...
+                    'ScaleMethod','fit');
+            
+            catch ME
+                msg = ME.message;
+                warning('%s', msg);
+                if contains(lower(msg),'billing') || contains(lower(msg),'quota')
+                    uialert(app.UIFigure, ...
+                        ['Your OpenAI billing limit or quota has been reached. ' ...
+                         'Simulation calculations are still complete.'], ...
+                        'Billing Limit Reached');
+                else
+                    uialert(app.UIFigure, sprintf('AI visual generation failed.\n\n%s\n\nSimulation calculations are still complete.', msg), 'AI Error');
+                end
             end
         end
-        
-        % UPDATE COST LABEL
-        app.EstimatedBillPhp000Label.Text = sprintf('Estimated Bill (%s): Php %.2f', ...
-            app.TimeFrameDropDown.Value, totalCost);
-        
-        end
-
         %% VII. ---------------------- CLEAR FUNCTION ----------------------
         function clearInputs(app)
             % CLEAR SELECTION AND CONSUMPTION FIELDS
