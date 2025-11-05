@@ -1,52 +1,99 @@
-# ⚡ SimuGrid (MATLAB + OpenAI)
+# ⚡ SimuPower — AI Energy Visualization for MATLAB
 
-SimuGrid automatically generates **schematic visualizations** of connected appliances using **OpenAI’s image generation API**.
-It combines real-time **energy consumption simulation** with **AI-powered infographic rendering** — turning your data into elegant, educational visuals.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Repo Size](https://img.shields.io/github/repo-size/ItsJacovJS/SimuPower)](https://github.com/ItsJacovJS/SimuPower)
+[![Stars](https://img.shields.io/github/stars/ItsJacovJS/SimuPower?style=social)](https://github.com/ItsJacovJS/SimuPower)
 
----
-
-## 🎯 Features
-
-✅ **AI-Powered Visualization**
-Automatically generates schematic circuit-style images of selected appliances using OpenAI’s `gpt-image-1` model.
-
-✅ **Dynamic Cost Simulation**
-Calculates estimated electricity cost based on:
-
-* Appliance wattage
-* Usage hours
-* Time frame *(Daily / Weekly / Monthly)*
-
-✅ **Interactive UI**
-Built with MATLAB App Designer — includes dropdown menus, list boxes, live image panels, and real-time billing labels.
-
-✅ **Error & Billing Handling**
-
-* Graceful fallback if API call fails
-* Friendly alert when billing or quota limits are reached
-* Clean log warnings (no crashes)
+> 💡 *SimuPower turns MATLAB simulations into real-time, AI-generated schematic visuals.*  
+> Now available in **two separate builds** — powered by **ChatGPT (OpenAI)** and **Cloudflare AI Gateway**.
 
 ---
 
-## 🧠 How It Works
+## 🌐 Two Versions — Your Choice, Your Power
 
-1. Select appliances from the list.
-2. Choose how many and for how long they’ll run.
-3. The app:
+| Version | API Source | Cost | Description |
+|----------|-------------|------|--------------|
+| 🧠 **SimuPower (ChatGPT Edition)** | OpenAI’s `gpt-image-1` model | 💰 Paid API credits required | High-quality, direct integration with OpenAI’s API. |
+| ☁️ **SimuPower (Cloudflare Edition)** | Cloudflare AI Gateway endpoint | 🆓 Free / low-cost | Uses Cloudflare proxy routing for affordable image generation. |
 
-   * Computes energy use and cost
-   * Sends a **descriptive text prompt** to OpenAI’s image generation API
-   * Displays the generated circuit diagram right inside the MATLAB app
+> ⚙️ Both editions simulate the same energy data — they only differ in how images are generated.  
+> Choose **ChatGPT Edition** for top quality, or **Cloudflare Edition** if you’re on a tight budget.
+
+*📝 Note: There is also a DeepAI version but it has not yet been polished, use at your own risk*
 
 ---
 
-## 🧩 Core Function: `updateSimulation(app)`
+## 📁 Repository Structure
 
-This function:
+```bash
+SimuPower/
+├── Simulator/
+│ └── Cloudflare Edition/  
+│   └── simupower.m
+│ └── ChatGPT Edition/
+│   └── simupower.m
+```
 
-* Manages UI elements (images, labels)
-* Builds descriptive prompts for OpenAI
-* Handles all network communication and errors
+## ⚙️ Overview
+
+**SimuPower** combines energy simulation and AI visualization to create smart, schematic-style circuit images.  
+It estimates appliance energy use, cost, and displays a generated image directly inside **MATLAB’s App Designer UI**.
+
+---
+
+## ✨ Features
+
+### ✅ Two Independent Editions
+- 🧠 **simupower.m** *(ChatGPT)* — OpenAI-powered (premium image generation, higher quality)
+- ☁️ **simupower.m** *(CloudFare)* — Cloudflare-proxied (free alternative for budget users)
+
+> 💡 *These are two separate files! Choose your edition based on your needs or budget.*
+
+### ⚡ Dynamic Cost Simulation
+Calculates energy cost based on:
+- Appliance wattage  
+- Usage hours  
+- Time frame *(Daily / Weekly / Monthly)*  
+
+### 🧩 AI-Generated Visuals
+Creates schematic circuit diagrams of selected appliances using AI-generated prompts.
+
+### 🧱 Error-Handled API Calls
+Graceful handling of:
+- Billing or quota issues  
+- API key errors  
+- Failed Cloudflare endpoints  
+
+### 🔌 Offline Fallback
+When no API is available, the simulation continues without image generation.
+
+---
+
+## 🧮 How It Works
+
+1. Select which edition you want to run.
+2. Choose appliances and duration.  
+3. MATLAB simulates energy use and cost.  
+4. The app sends a text prompt to your chosen AI API.  
+5. The generated schematic is displayed in real time inside MATLAB.
+
+---
+
+## 🧠 ChatGPT Edition Setup (💰 Paid / Premium Option)
+
+🔥 **Best for maximum image quality and precision.**
+
+1. Open `ChatGPT Edition/simupower.m` in MATLAB.  
+2. Add your OpenAI API key inside the code:
+
+   ```matlab
+   apiKey = "sk-proj-xxxx";
+   url = "https://api.openai.com/v1/images/generations";
+   ```
+3. Run the app.  
+4. Select your appliances — the app will use OpenAI’s `gpt-image-1` model to generate visuals.
+
+### Example MATLAB Request
 
 ```matlab
 body = struct( ...
@@ -59,49 +106,62 @@ req = RequestMessage('post', headers, MessageBody(body));
 resp = req.send(url);
 ```
 
-If the OpenAI quota or billing limit is reached, the app displays:
+If the OpenAI quota or billing limit is reached, MATLAB displays:
 
-> ⚠️ “Your OpenAI billing limit or quota has been reached.
-> Please check your plan and billing details on the OpenAI dashboard.”
-
----
-
-## 🛠️ Requirements
-
-* MATLAB R2023a or later *(works on MATLAB ONLINE as well)*
-* **App Designer Toolbox**
-* Valid [OpenAI API key](https://platform.openai.com/api-keys)
-* Active billing plan on OpenAI
+> ⚠️ “Your OpenAI billing limit or quota has been reached.  
+> Please check your API usage on the OpenAI dashboard.”
 
 ---
 
-## 🚀 Setup
+## ☁️ Cloudflare Edition Setup (🆓 Budget Option)
 
-1. Clone or download this repository.
-2. Open the `.m` file in MATLAB App Designer.
-3. Replace the placeholder API key:
+💸 **Perfect for students, hobbyists, or users under budget constraints.**
+
+1. Open `Cloudflare Edition/simupower.m` in MATLAB.  
+2. Replace the endpoint and API key:
 
    ```matlab
-   apiKey = 'sk-proj-xxxx';
+   apiKey = "cf-key-xxxx";
+   url = "https://your-endpoint.workers.dev/v1/images/generations";
    ```
-4. Run the app — select appliances and visualize your AI-generated circuit.
+3. Run the app — visuals are generated through your Cloudflare Worker proxy.
+
+💬 *Image quality and speed may vary depending on your Cloudflare setup — but it’s completely free!*
 
 ---
 
-## 📸 Snapshot
-![SimuGrid Simulation](https://github.com/ItsJacovJS/SimuPower/blob/main/images/snapshot_1.jpg)
+## 📸 Snapshots
 
-*(Image generated via OpenAI `gpt-image-1`)*
+![App UI](https://github.com/ItsJacovJS/SimuPower/blob/main/images/snapshot_1.jpg)
 
-![AI Sample Prompt](https://github.com/ItsJacovJS/SimuPower/blob/main/images/snapshot_2.png)
+| 🧠 ChatGPT Edition | ☁️ Cloudflare Edition |
+|--------------------|----------------------|
+| ![ChatGPT Edition](https://github.com/ItsJacovJS/SimuPower/blob/main/images/snapshot_2.png) | ![Cloudflare Edition](https://github.com/ItsJacovJS/SimuPower/blob/main/images/snapshot_3.png) |
+
+> Both editions visualize the same simulation — just powered by different APIs.
+
+---
+
+## 🛠 Requirements
+
+- MATLAB R2023a or later *(works on MATLAB Online)*  
+- App Designer Toolbox  
+- One of:  
+  - ✅ **OpenAI API key** (for ChatGPT Edition)  
+  - ✅ **Cloudflare Worker or Gateway endpoint** (for Cloudflare Edition)
+
+---
+
+## 💡 Tips & Best Practices
+
+🧠 Use **ChatGPT Edition** for higher accuracy and faster AI rendering.  
+☁️ Use **Cloudflare Edition** if you want to avoid OpenAI API costs.  
+🔄 Keep both versions — you can switch anytime without reconfiguring MATLAB.  
+💾 Make sure your API key and endpoint are securely stored and **not committed to GitHub**.
 
 ---
 
 ## 🧾 License
 
-MIT License © 2025
-Created with ❤️ by ItJacovJS
-
----
-
-> 💡: You can extend this project with MatGPT or integrate ChatGPT-5 for real-time troubleshooting or design suggestions right inside MATLAB!
+**MIT License © 2025**  
+Created with ⚡ and ❤️ by **ItsJacovJS**
