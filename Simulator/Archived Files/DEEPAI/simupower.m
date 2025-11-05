@@ -1,3 +1,5 @@
+% Why is this archived? The functionalities aren't FULLY tested. For a more reliable and working code, check the other files that aren't under .../Archived Files/
+
 % ---------------------- LEGEND ----------------------
 %               [i] APP COMPONENTS
 %               [ii] UI CREATION
